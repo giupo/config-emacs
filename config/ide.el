@@ -1,5 +1,7 @@
 ;;; ide.el --- IDE setup for C/C++, Python, R -*- lexical-binding: t; -*-
 
+;;; Code:
+
 ;;; Tree-sitter
 (use-package treesit
   :ensure nil  ;; integrato in Emacs 29+
@@ -16,9 +18,8 @@
 
 ;;; LSP-mode
 (use-package lsp-mode
-  :ensure t
   :commands (lsp lsp-deferred)
-  :hook ((c-mode c++-mode python-mode ess-r-mode) . lsp-deferred)
+  :hook ((c-mode c++-mode python-mode ess-r-mode go-mode) . lsp-deferred)
   :custom
   (lsp-keymap-prefix "C-c l")
   (lsp-enable-snippet t)
@@ -27,7 +28,6 @@
   (lsp-idle-delay 0.2))
 
 (use-package lsp-ui
-  :ensure t
   :after lsp-mode
   :commands lsp-ui-mode
   :custom
@@ -35,37 +35,21 @@
   (lsp-ui-doc-delay 0.3)
   (lsp-ui-sideline-enable t))
 
-;;; Debugging
-(use-package dap-mode
-  :ensure t
-  :after lsp-mode
+
+;;; Go mode
+
+(use-package go-mode
+  :mode "\\.go\\'"
   :config
-  (dap-auto-configure-mode)
-  (require 'dap-python)
-  (require 'dap-lldb)
-  (require 'dap-gdb-lldb))
-
-;;; Completamento (usa Corfu, più moderno di company)
-(use-package corfu
-  :ensure t
-  :init (global-corfu-mode)
-  :custom
-  (corfu-auto t)
-  (corfu-cycle t))
-
-(use-package kind-icon
-  :ensure t
-  :after corfu
-  :custom (kind-icon-default-face 'corfu-default)
-  :config (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+  (setq gofmt-command "goimports")
+  (add-hook 'before-save-hook 'gofmt-before-save)
+  )
 
 ;;; Python + Poetry
 (use-package pyvenv
-  :ensure t
   :hook (python-mode . pyvenv-tracking-mode))
 
 (use-package poetry
-  :ensure t
   :after python
   :config
   (poetry-tracking-mode)
@@ -73,7 +57,6 @@
 
 ;;; R (ESS + LSP)
 (use-package ess
-  :ensure t
   :commands R
   :config
   (require 'ess-r-mode))
@@ -85,8 +68,31 @@
 
 ;;; Flycheck (linting)
 (use-package flycheck
-  :ensure t
   :init (global-flycheck-mode))
+
+
+(use-package magit
+  :ensure t
+  :commands (magit-status magit-blame)
+  :bind (("C-x g" . magit-status)          ;; apri il buffer di status
+         ("C-x M-g" . magit-dispatch)))    ;; menu completo
+
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1))
+
+
+(use-package company
+  :diminish company-mode
+  :hook
+  (after-init . global-company-mode)
+  (go-mode . company-mode)
+  :custom
+  (company-idle-delay 0.1)       ;; tempo prima che appaia il popup
+  (company-minimum-prefix-length 1) ;; inizia a completare dopo 1 carattere
+  (company-tooltip-align-annotations t) ;; allinea annotazioni
+  (company-selection-wrap-around t))     ;; ciclare tra gli elementi
 
 
 (provide 'ide)

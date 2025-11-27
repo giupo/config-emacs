@@ -2,15 +2,17 @@
 
 (require 'use-package-config)
 
+;;; Code:
+
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 
-(use-package all-the-icons)
 
 (use-package all-the-icons-dired
-  :hook (dired-mode . all-the-icons-mode)
-  )
+  :ensure t
+  :hook (dired-mode . all-the-icons-dired-mode))
+
 
 (use-package doom-themes
   :config
@@ -104,6 +106,12 @@
   :init
   (setq prefix-help-command #'embark-prefix-help-command))
 
+
+(use-package embark-consult
+  :ensure t
+  :after (embark consult)
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 
 
 

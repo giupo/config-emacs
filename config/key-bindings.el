@@ -1,5 +1,7 @@
 ;;; key-bindings.el --- general keybindings -*- lexical-binding: t; -*-
 
+;;; Code:
+
 (provide 'key-bindings)
 
 ;; Esempio: bind su F5 per compilare
