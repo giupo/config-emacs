@@ -1,2 +1,8 @@
 elpa
 auto-save-list
+tree-sitter
+transiet
+history
+eln-cache
+.lsp-session-v1
+.cache
