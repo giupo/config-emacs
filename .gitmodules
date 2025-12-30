@@ -1,0 +1,3 @@
+[submodule "vendor/spinner"]
+	path = vendor/spinner
+	url = https://github.com/Malabarba/spinner.el
