@@ -1,4 +1,6 @@
-;;; ui.el --- UI config -*- lexical-binding: t; -*-
+                   ;;; ui.el --- UI config -*- lexical-binding: t; -*-
+;;; Commentary:
+;; Some shit about UI
 
 (require 'use-package-config)
 
@@ -119,7 +121,7 @@
 (when (display-graphic-p)
   (set-face-attribute 'default nil
                       :family "Fira Code"
-                      :height 110)
+                      :height 135)
 	(set-fontset-font t 'symbol "Noto Color Emoji" nil 'append)
 	(set-fontset-font t 'unicode "Symbols Nerd Font" nil 'append)
   )

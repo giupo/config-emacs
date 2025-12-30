@@ -5,6 +5,10 @@
 ;;; Tree-sitter
 
 ;; --- tree-sitter recipes (EMACS 30 SAFE) -----------------
+
+(add-to-list 'load-path "~/.config/emacs/vendor/spinner") ;; aggiorna il path
+(require 'spinner)
+
 (setq treesit-language-source-alist
       '((c "https://github.com/tree-sitter/tree-sitter-c")
         (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
@@ -17,10 +21,8 @@
 
 (use-package treesit
   :ensure nil  ;; integrato in Emacs 29+
-  :config
-  (dolist (lang '(c cpp python r))
-    (unless (treesit-language-available-p lang)
-      (treesit-install-language-grammar lang))))
+)
+
 
 ;;; LSP-mode
 (use-package lsp-mode
