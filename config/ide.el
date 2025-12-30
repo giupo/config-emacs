@@ -3,14 +3,20 @@
 ;;; Code:
 
 ;;; Tree-sitter
+
+;; --- tree-sitter recipes (EMACS 30 SAFE) -----------------
+(setq treesit-language-source-alist
+      '((c "https://github.com/tree-sitter/tree-sitter-c")
+        (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+        (bash "https://github.com/tree-sitter/tree-sitter-bash")
+        (cmake "https://github.com/uyha/tree-sitter-cmake")
+        (json "https://github.com/tree-sitter/tree-sitter-json")
+        (python "https://github.com/tree-sitter/tree-sitter-python")
+        (elisp "https://github.com/Wilfred/tree-sitter-elisp")))
+
+
 (use-package treesit
   :ensure nil  ;; integrato in Emacs 29+
-  :custom
-  (treesit-language-source-alist
-   '((c . ("https://github.com/tree-sitter/tree-sitter-c"))
-     (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp"))
-     (python . ("https://github.com/tree-sitter/tree-sitter-python"))
-     (r . ("https://github.com/r-lib/tree-sitter-r"))))
   :config
   (dolist (lang '(c cpp python r))
     (unless (treesit-language-available-p lang)

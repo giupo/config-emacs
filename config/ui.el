@@ -114,6 +114,17 @@
   (embark-collect-mode . consult-preview-at-point-mode))
 
 
+;; font
+
+(when (display-graphic-p)
+  (set-face-attribute 'default nil
+                      :family "Fira Code"
+                      :height 110)
+	(set-fontset-font t 'symbol "Noto Color Emoji" nil 'append)
+	(set-fontset-font t 'unicode "Symbols Nerd Font" nil 'append)
+  )
+
+
 
 (provide 'ui)
 

@@ -1,6 +1,11 @@
 ;;; use-package-config.el --- Giuseppe's Emacs config -*- lexical-binding: t; -*-
+;;; Commentary:
+;;; Fuck it.
 
+
+;;; Code:
 ;; Assicurati che package.el non abbia già fatto nulla in early-init.el
+
 (require 'package)
 (require 'core-network)
 
@@ -27,6 +32,7 @@
 
 ;; Imposta use-package per installare automaticamente i pacchetti mancanti
 (setq use-package-always-ensure t)
+
 
 (provide 'use-package-config)
 
