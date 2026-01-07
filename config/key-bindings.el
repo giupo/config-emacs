@@ -10,7 +10,7 @@
 ;; Esempio: bind su F8 per ibuffer
 (global-set-key (kbd "<f8>") #'ibuffer)
 
-;; Esempio: bind su F9 per switchare file
-(global-set-key (kbd "<f9>") #'other-window)
+;; Bind su F9 per switchare tra header e implementation (C/C++)
+(global-set-key (kbd "<f9>") #'ff-find-other-file)
 
 ;;; key-bindings.el ends here
