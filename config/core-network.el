@@ -3,7 +3,7 @@
 
 (defun ga/on-home-network-p ()
   "Ritorna t se l'IP locale indica la rete di casa."
-  (let ((ip (shell-command-to-string "hostname -I 2>/dev/null")))
+  (let ((ip (shell-command-to-string "hostname -i 2>/dev/null")))
     (string-match-p "10\\.17\\.17\\." ip)))
 
 (defun ga/setup-proxy-if-needed ()

@@ -100,8 +100,33 @@
   (company-idle-delay 0.1)       ;; tempo prima che appaia il popup
   (company-minimum-prefix-length 1) ;; inizia a completare dopo 1 carattere
   (company-tooltip-align-annotations t) ;; allinea annotazioni
-  (company-selection-wrap-around t))     ;; ciclare tra gli elementi
+  (company-selection-wrap-around t) ;; ciclare tra gli elementi
+  )
 
+;;; Projectile
+(use-package projectile
+  :diminish projectile-mode
+  :init
+  (projectile-mode +1)
+  :custom
+  (projectile-switch-project-action 'projectile-commander)
+  (projectile-cache-file "~/.config/emacs/.cache/projectile.cache")
+  (projectile-known-projects-file "~/.config/emacs/.cache/projectile-bookmarks.eld")
+  (projectile-enable-caching t)
+  :bind-keymap
+  ("C-c p" . projectile-command-map)
+  )
+
+;;; Compilation buffer auto-close
+(defun compilation-close-on-success (buffer string)
+  "Close compilation buffer after 2 seconds if compilation was successful."
+  (when (string-match "^finished" string)
+    (run-with-timer 2 nil (lambda () 
+                             (when (buffer-live-p buffer)
+                               (delete-windows-on buffer)
+                               (kill-buffer buffer))))))
+
+(add-hook 'compilation-finish-functions 'compilation-close-on-success)
 
 (provide 'ide)
 

@@ -4,8 +4,8 @@
 
 (provide 'key-bindings)
 
-;; Esempio: bind su F5 per compilare
-(global-set-key (kbd "<f5>") #'compile)
+;; Bind su F5 per compilare (C/C++ smart, altrimenti fallback a compile)
+(global-set-key (kbd "<f5>") #'projectile-compile-project)
 
 ;; Esempio: bind su F8 per ibuffer
 (global-set-key (kbd "<f8>") #'ibuffer)

@@ -126,6 +126,23 @@
 	(set-fontset-font t 'unicode "Symbols Nerd Font" nil 'append)
   )
 
+(defun ga/increment-font-size ()
+  "Incrementa la dimensione del font di 5."
+  (interactive)
+  (let ((current-height (face-attribute 'default :height)))
+    (set-face-attribute 'default nil :height (+ current-height 5))
+    (message "Font size: %d" (+ current-height 5))))
+
+(defun ga/decrement-font-size ()
+  "Decrementa la dimensione del font di 5."
+  (interactive)
+  (let ((current-height (face-attribute 'default :height)))
+    (set-face-attribute 'default nil :height (max 50 (- current-height 5)))
+    (message "Font size: %d" (max 50 (- current-height 5)))))
+
+(global-set-key (kbd "C-+") 'ga/increment-font-size)
+(global-set-key (kbd "C--") 'ga/decrement-font-size)
+
 
 
 (provide 'ui)
