@@ -117,6 +117,31 @@
   ("C-c p" . projectile-command-map)
   )
 
+;;; DAP Mode (Debug Adapter Protocol)
+(use-package dap-mode
+  :ensure t
+  :commands dap-debug
+  :hook (dap-session-created . (lambda (&_rest) (dap-hydra)))
+  :config
+  (require 'dap-gdb-lldb)
+  (dap-register-debug-template
+   "C++ GDB"
+   (list :type "gdb"
+         :request "launch"
+         :name "GDB"
+         :gdbpath "gdb"
+         :target nil
+         :cwd "${workspaceFolder}"
+         :args ""
+         :stopAtEntry nil))
+  (dap-ui-mode 1)
+  (dap-ui-locals-mode 1)
+  :bind
+  (("C-c d d" . dap-debug)
+   ("C-c d b" . dap-breakpoint-toggle)
+   ("C-c d r" . dap-debug-restart)
+   ("C-c d l" . dap-debug-last)))
+
 ;;; Compilation buffer auto-close
 (defun compilation-close-on-success (buffer string)
   "Close compilation buffer after 2 seconds if compilation was successful."

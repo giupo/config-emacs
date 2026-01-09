@@ -143,7 +143,12 @@
 (global-set-key (kbd "C-+") 'ga/increment-font-size)
 (global-set-key (kbd "C--") 'ga/decrement-font-size)
 
-
+;; Smooth scrolling
+(setq scroll-conservatively 101)      ;; Evita i salti di pagina
+(setq scroll-margin 3)                ;; Mantiene 3 linee visibili sopra/sotto il cursore
+(setq scroll-step 1)                  ;; Scrolla di una linea alla volta
+(setq mouse-wheel-scroll-amount '(3)) ;; 3 righe per scroll con mouse
+(setq mouse-wheel-progressive-speed nil) ;; Disabilita accelerazione progressiva
 
 (provide 'ui)
 
