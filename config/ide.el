@@ -1,4 +1,6 @@
 ;;; ide.el --- IDE setup for C/C++, Python, R -*- lexical-binding: t; -*-
+;;; Contents:
+;; Stuff for IDE
 
 ;;; Code:
 
@@ -27,7 +29,7 @@
 ;;; LSP-mode
 (use-package lsp-mode
   :commands (lsp lsp-deferred)
-  :hook ((c-mode c++-mode python-mode ess-r-mode go-mode) . lsp-deferred)
+  :hook ((c-mode c++-mode python-mode ess-r-mode go-mode csharp-ts-mode csharp-mode) . lsp-deferred)
   :custom
   (lsp-keymap-prefix "C-c l")
   (lsp-enable-snippet t)
@@ -51,6 +53,11 @@
   :config
   (setq gofmt-command "goimports")
   (add-hook 'before-save-hook 'gofmt-before-save)
+  (defun my-go-mode-setup ()
+    (setq tab-width 2)
+    (setq indent-tabs-mode t)) ;; usa TAB, non spazi
+  
+  (add-hook 'go-mode-hook #'my-go-mode-setup)
   )
 
 ;;; Python + Poetry
@@ -135,7 +142,7 @@
          :args ""
          :stopAtEntry nil))
   (dap-ui-mode 1)
-  (dap-ui-locals-mode 1)
+  ;; (dap-ui-locals-mode 1)
   :bind
   (("C-c d d" . dap-debug)
    ("C-c d b" . dap-breakpoint-toggle)
@@ -152,6 +159,56 @@
                                (kill-buffer buffer))))))
 
 (add-hook 'compilation-finish-functions 'compilation-close-on-success)
+
+
+;; C#
+
+(defun my/dotnet-format-project ()
+  (when-let* ((proj (project-current))
+              (root (project-root proj)))
+    (let ((default-directory root))
+      (shell-command "dotnet format"))))
+
+(defun my/dotnet-format ()
+  (interactive)
+  (let ((root (or (lsp-workspace-root)
+                  (locate-dominating-file default-directory ".editorconfig")
+                  (locate-dominating-file default-directory "*.sln"))))
+    (unless root
+      (error "Non trovo la root del progetto .NET"))
+    (let ((default-directory root))
+      (async-shell-command "dotnet format"))))
+
+(use-package omnisharp
+  :after csharp-mode
+  :init
+  (defun my-csharp-style ()
+    ;; Stile base
+    (c-set-style "k&r")
+
+    ;; Graffe attaccate SEMPRE
+    (c-set-offset 'substatement-open 0)
+    (c-set-offset 'block-open 0)
+    (c-set-offset 'brace-list-open 0)
+    
+    ;; Non andare a capo dopo if/for/while
+    (setq c-hanging-braces-alist
+          '((substatement-open . nil)
+            (block-open . nil)
+            (brace-list-open . nil)))
+    
+    ;; Indentazione standard
+    (setq c-basic-offset 2
+          indent-tabs-mode nil))
+
+  (add-hook 'csharp-mode-hook #'my-csharp-style)
+  (add-hook 'csharp-mode-hook
+            (lambda ()
+              (add-hook 'after-save-hook #'my/dotnet-format)))
+  )
+
+
+
 
 (provide 'ide)
 
