@@ -1,4 +1,6 @@
 ;;; ide.el --- IDE setup for C/C++, Python, R -*- lexical-binding: t; -*-
+;;; Commentary:
+
 ;;; Contents:
 ;; Stuff for IDE
 
@@ -127,10 +129,14 @@
 ;;; DAP Mode (Debug Adapter Protocol)
 (use-package dap-mode
   :ensure t
+  :after lsp-mode
   :commands dap-debug
   :hook (dap-session-created . (lambda (&_rest) (dap-hydra)))
   :config
+  (dap-auto-configure-mode)
+  (require 'dap-python)
   (require 'dap-gdb-lldb)
+  (setq dap-python-debugger 'debugpy)
   (dap-register-debug-template
    "C++ GDB"
    (list :type "gdb"
@@ -158,26 +164,56 @@
                                (delete-windows-on buffer)
                                (kill-buffer buffer))))))
 
-(add-hook 'compilation-finish-functions 'compilation-close-on-success)
+; (add-hook 'compilation-finish-functions 'compilation-close-on-success)
 
 
 ;; C#
 
-(defun my/dotnet-format-project ()
-  (when-let* ((proj (project-current))
-              (root (project-root proj)))
-    (let ((default-directory root))
-      (shell-command "dotnet format"))))
+(defun my/find-dotnet-solution ()
+  "Trova il file .slnx o .sln risalendo l'albero delle directory."
+  (let* ((root (or (locate-dominating-file default-directory ".git")
+                   (locate-dominating-file default-directory "*.slnx")
+                   (locate-dominating-file default-directory "*.sln"))))
+    (unless root
+      (error "Non trovo la root del progetto .NET"))
+
+    (or
+     (car (directory-files root t "\\.slnx$"))
+     (car (directory-files root t "\\.sln$"))
+     (error "Trovata la root ma nessun file .slnx o .sln"))))
+
+(defun my/dotnet-format-old ()
+  (interactive)
+  (let* ((solution (my/find-dotnet-solution))
+         (default-directory (file-name-directory solution)))
+    (async-shell-command
+     (format "dotnet format \"%s\"" solution))))
+
+
 
 (defun my/dotnet-format ()
   (interactive)
-  (let ((root (or (lsp-workspace-root)
-                  (locate-dominating-file default-directory ".editorconfig")
-                  (locate-dominating-file default-directory "*.sln"))))
-    (unless root
-      (error "Non trovo la root del progetto .NET"))
-    (let ((default-directory root))
-      (async-shell-command "dotnet format"))))
+  (let* ((solution (my/find-dotnet-solution))
+         (default-directory (file-name-directory solution))
+         (cmd (format "dotnet format \"%s\" --exclude ./Legacy ./DontCare" solution))
+         (buffer-name "*dotnet-format*")
+         (buffer (get-buffer-create buffer-name)))
+    (with-current-buffer buffer
+      (erase-buffer))
+    (let ((proc (start-process-shell-command
+                 "dotnet-format"
+                 buffer
+                 cmd)))
+      (set-process-sentinel
+       proc
+       (lambda (p event)
+         (when (and (eq (process-status p) 'exit)
+                    (= (process-exit-status p) 0))
+           ;; exit 0 → chiudi tutto
+           (when-let ((win (get-buffer-window buffer)))
+             (delete-window win))
+           (kill-buffer buffer)))))))
+
 
 (use-package omnisharp
   :after csharp-mode
@@ -201,14 +237,11 @@
     (setq c-basic-offset 2
           indent-tabs-mode nil))
 
-  (add-hook 'csharp-mode-hook #'my-csharp-style)
-  (add-hook 'csharp-mode-hook
-            (lambda ()
-              (add-hook 'after-save-hook #'my/dotnet-format)))
-  )
-
-
-
+  ;; (add-hook 'csharp-mode-hook #'my-csharp-style)
+  ;;(add-hook 'csharp-mode-hook
+  ;;          (lambda ()
+  ;;            (add-hook 'after-save-hook #'my/dotnet-format)))
+)
 
 (provide 'ide)
 
