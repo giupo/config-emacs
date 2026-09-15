@@ -13,5 +13,6 @@
 (require 'key-bindings)
 (require 'ui)
 (require 'ide)
+(require 'myorg)
 
 ;;; init.el ends here

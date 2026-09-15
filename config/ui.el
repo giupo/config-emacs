@@ -31,10 +31,16 @@
   (setq dashboard-startup-banner 'official) ;; logo Emacs ufficiale
   ;; oppure un file locale: (setq dashboard-startup-banner "~/.emacs.d/logo.png")
 
-  ;; mostra 5 file recenti
+  ;; mostra 5 file recenti + 5 voci dell'agenda org
   (setq dashboard-items '((recents  . 5)
                           (projects . 5)
-                          (bookmarks . 5)))
+                          (bookmarks . 5)
+                          (agenda   . 5)))
+
+  ;; mostra l'agenda della settimana, non solo di oggi
+  ;; (dashboard-filter-agenda-by-time, il filtro di default, esclude già
+  ;; i task DONE/archiviati e limita alla finestra temporale)
+  (setq dashboard-week-agenda t)
 
   ;; titolo del buffer
   (setq dashboard-banner-logo-title "Benvenuto in Emacs!")

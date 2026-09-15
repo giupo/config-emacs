@@ -216,6 +216,7 @@
 ;;; ---------------------------------------------------------------------------
 
 (use-package org-capture
+  :ensure nil
   :after org
 
   :custom
@@ -357,6 +358,7 @@
 ;;; ---------------------------------------------------------------------------
 
 (use-package org-id
+  :ensure nil
   :after org
   :custom
   (org-id-link-to-org-use-id 'create-if-interactive))
@@ -367,6 +369,7 @@
 ;;; ---------------------------------------------------------------------------
 
 (use-package org-tempo
+  :ensure nil
   :after org
   :config
   ;; Permette:
