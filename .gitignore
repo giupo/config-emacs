@@ -1,7 +1,7 @@
 elpa
 auto-save-list
 tree-sitter
-transiet
+transient
 history
 eln-cache
 .lsp-session-v1
@@ -9,3 +9,6 @@ recentf
 projects
 .dap-breakpoints
 projectile-frecency.eld
+bookmarks
+bookmarks.eld
+org-clock-save.el

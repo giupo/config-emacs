@@ -9,6 +9,12 @@
 
 ;;; Code:
 
+(defvar org-inbox-file nil)
+(defvar org-tasks-file nil)
+(defvar org-projects-file nil)
+(defvar org-notes-file nil)
+(defvar org-journal-file nil)
+
 (use-package org
   :ensure t
 
@@ -135,14 +141,11 @@
   ;; Editing
   ;; -------------------------------------------------------------------------
 
-  ;; Tab dentro una tabella fa il comportamento corretto
-  (org-return-follows-link t)
-
   ;; Enter dopo un heading crea il nuovo heading allo stesso livello
   (org-M-RET-may-split-line '((default . t)))
 
   ;; -------------------------------------------------------------------------
-  ;; Checkbox
+  ;; TODO dependencies
   ;; -------------------------------------------------------------------------
 
   (org-enforce-todo-dependencies t)
