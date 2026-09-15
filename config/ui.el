@@ -1,4 +1,4 @@
-                   ;;; ui.el --- UI config -*- lexical-binding: t; -*-
+;;; ui.el --- UI config -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;; Some shit about UI
 
@@ -7,8 +7,8 @@
 ;;; Code:
 
 (menu-bar-mode -1)
-(tool-bar-mode -1)
-(scroll-bar-mode -1)
+;;(tool-bar-mode -1)
+;;(scroll-bar-mode -1)
 
 
 (use-package all-the-icons-dired

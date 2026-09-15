@@ -8,7 +8,9 @@
    '(all-the-icons-dired company dap-mode dashboard doom-modeline
 			 doom-themes embark-consult ess go-mode
 			 lsp-pyright lsp-ui magit marginalia omnisharp
-			 orderless poetry projectile vertico))
+			 orderless org-capture org-id org-modern
+			 org-super-agenda org-tempo poetry projectile
+			 schlau-compile vertico))
  '(package-vc-selected-packages
    '((copilot :url "https://github.com/copilot-emacs/copilot.el" :branch
 	      "main"))))

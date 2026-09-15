@@ -72,6 +72,12 @@
   (poetry-tracking-mode)
   (setq poetry-tracking-strategy 'switch-buffer))
 
+(use-package lsp-pyright
+  :ensure t
+  :custom (lsp-pyright-langserver-command "pyright") ;; or basedpyright
+  :hook (python-mode . (lambda ()
+                          (require 'lsp-pyright)
+                          (lsp-deferred))))  ; or lsp-deferred
 ;;; R (ESS + LSP)
 (use-package ess
   :commands R
@@ -242,6 +248,70 @@
   ;;          (lambda ()
   ;;            (add-hook 'after-save-hook #'my/dotnet-format)))
 )
+
+
+(use-package schlau-compile
+  :ensure t
+  :init
+  
+  (defconst cppninja "if [ ! -d %G/build ]; then mkdir %G/build; fi ; cd %G/build && echo \"Entering directory \'%G/build\'\" && cmake -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_CODE_ANALYSIS=ON .. && ninja -k3 -j8")
+  (defconst cppmake  "if [ ! -d %G/build ]; then mkdir %G/build; fi ; cd %G/build && echo \"Entering directory \'%G/build\'\" && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_CODE_ANALYSIS=ON .. && make")
+  (defconst rustmake "RUST_BACKTRACE=1 ~/.cargo/bin/cargo build && ~/.cargo/bin/cargo test -- --nocapture")
+  (defconst rubymake "rake build")
+  (defconst gomake  "export GOPATH=/development/go ; go install ./... && go test -v && go vet")
+  (defconst hackage "cd %G && stack build --allow-different-user && stack test")
+  (defconst pythonmake "cd %G && uv run pytest -v -x --cov")
+  
+  (setq schlau-compile-alist
+	(append
+	 ;; build Haskell
+	 (eval `'((haskell-mode  . ,hackage)))
+	 (eval `'((yaml-mode     . ,hackage)))
+
+	 ;; compile Go
+	 (eval `'((go-mode . ,gomake)))
+       
+	 ;; compile C++
+	 (eval `'((c++-mode   . ,cppninja)))
+	 (eval `'((cmake-mode . ,cppninja)))
+
+	 ;; compile Rust
+	 (eval `'((rust-mode  . ,rustmake)))
+	 (eval `'((toml-mode  . ,rustmake)))
+
+	 ;; compile rubygem
+	 (eval `'((ruby-mode  . ,rubymake)))
+	 (eval `'((python-mode . ,pythonmake)))
+       ))
+
+  (global-set-key [f5] 'schlau-compile-compile)
+  (global-set-key [f6] 'schlau-compile-query)
+  (global-set-key [C-f6] 'kill-compilation)
+  )
+
+(add-to-list 'compilation-error-regexp-alist 'pytest-nodeid)
+
+(add-to-list 'compilation-error-regexp-alist-alist
+             '(pytest-nodeid
+               "^\\([^:\n]+\\.py\\)::[^[:space:]]+\\s-+FAILED"
+               1 nil))
+(setq compilation-scroll-output t)
+
+
+(defun my-compilation-close-on-success (buffer status)
+  (when (string-match-p "\\`finished" status)
+    (run-at-time
+     5 nil
+     (lambda (buffer)
+       (when (buffer-live-p buffer)
+         (let ((window (get-buffer-window buffer)))
+           (when window
+             (delete-window window))
+           (kill-buffer buffer))))
+     buffer)))
+
+(add-hook 'compilation-finish-functions #'my-compilation-close-on-success)
+
 
 (provide 'ide)
 
