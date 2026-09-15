@@ -11,9 +11,9 @@
 ;;(scroll-bar-mode -1)
 
 
-(use-package all-the-icons-dired
+(use-package nerd-icons-dired
   :ensure t
-  :hook (dired-mode . all-the-icons-dired-mode))
+  :hook (dired-mode . nerd-icons-dired-mode))
 
 
 (use-package doom-themes
