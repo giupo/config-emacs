@@ -397,6 +397,13 @@
 
 (add-hook 'org-mode-hook #'my/org-mode-setup)
 
+
+(defun my/org-search ()
+  "Search all Org files using ripgrep."
+  (interactive) (consult-ripgrep org-directory))
+
+(global-set-key (kbd "C-c s") #'my/org-search)
+
 (provide 'myorg)
 
 ;;; myorg.el ends here
