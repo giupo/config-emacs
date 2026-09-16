@@ -404,6 +404,31 @@
 
 (global-set-key (kbd "C-c s") #'my/org-search)
 
+
+;;; ---------------------------------------------------------------------------
+;;; Org auto-commit
+;;; ---------------------------------------------------------------------------
+
+(defun my/org-git-auto-commit ()
+  "After saving, `git add' and `git commit' the current Org file.
+
+Only acts if the file lives inside `org-directory' and that
+directory (or a parent) is a git repository."
+  (when (and buffer-file-name
+             (string-prefix-p (expand-file-name org-directory)
+                               (expand-file-name buffer-file-name)))
+    (let* ((git-root (locate-dominating-file buffer-file-name ".git")))
+      (when git-root
+        (let* ((default-directory git-root)
+               (file (file-relative-name buffer-file-name git-root)))
+          (call-process "git" nil nil nil "add" "--" file)
+          (call-process "git" nil nil nil "commit" "-m"
+                        (format "Auto-save: %s" file) "--" file))))))
+
+(add-hook 'org-mode-hook
+          (lambda ()
+            (add-hook 'after-save-hook #'my/org-git-auto-commit nil t)))
+
 (provide 'myorg)
 
 ;;; myorg.el ends here
