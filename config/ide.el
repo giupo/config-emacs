@@ -299,7 +299,13 @@
 
 
 (defun my-compilation-close-on-success (buffer status)
-  (when (string-match-p "\\`finished" status)
+  "Close BUFFER after success, but only for real compilation buffers.
+Grep/rgrep buffers (and other compilation-mode derivatives meant
+to be browsed, like occur) are left alone so they stay open for
+navigation and editing."
+  (when (and (string-match-p "\\`finished" status)
+             (with-current-buffer buffer
+               (eq major-mode 'compilation-mode)))
     (run-at-time
      5 nil
      (lambda (buffer)
