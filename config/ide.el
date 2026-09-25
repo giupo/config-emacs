@@ -223,23 +223,41 @@
   :ensure t
   :init
   
-  (defconst ga/cppninja "mkdir -p %G/build && cd %G/build && echo \"Entering directory '%G/build'\" && cmake -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_CODE_ANALYSIS=ON .. && ninja -k3 -j8")
-  (defconst ga/rustmake "RUST_BACKTRACE=1 ~/.cargo/bin/cargo build && ~/.cargo/bin/cargo test -- --nocapture")
-  (defconst ga/rubymake "rake build")
-  (defconst ga/gomake  "export GOPATH=/development/go ; go install ./... && go test -v && go vet")
+  ;; C/C++: CMake + Ninja se c'è un CMakeLists.txt nella root, altrimenti make
+  (defconst ga/cppninja "cd %G && if [ -f CMakeLists.txt ]; then mkdir -p build && cd build && echo \"Entering directory '%G/build'\" && cmake -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_CODE_ANALYSIS=ON .. && ninja -k3 -j8; else make -k; fi")
+  (defconst ga/rustmake "cd %G && RUST_BACKTRACE=1 ~/.cargo/bin/cargo build && ~/.cargo/bin/cargo test -- --nocapture")
+  (defconst ga/rubymake "cd %G && rake build")
+  (defconst ga/gomake  "cd %G && export GOPATH=/development/go ; go install ./... && go test -v && go vet")
   (defconst ga/hackage "cd %G && stack build --allow-different-user && stack test")
   (defconst ga/pythonmake "cd %G && uv run pytest -v -x --cov")
 
   (setq schlau-compile-alist
-        `((haskell-mode . ,ga/hackage)
-          (yaml-mode    . ,ga/hackage)
-          (go-mode      . ,ga/gomake)
-          (c++-mode     . ,ga/cppninja)
-          (cmake-mode   . ,ga/cppninja)
-          (rust-mode    . ,ga/rustmake)
-          (toml-mode    . ,ga/rustmake)
-          (ruby-mode    . ,ga/rubymake)
-          (python-mode  . ,ga/pythonmake)))
+        `((haskell-mode   . ,ga/hackage)
+          (yaml-mode      . ,ga/hackage)
+          (go-mode        . ,ga/gomake)
+          (go-ts-mode     . ,ga/gomake)
+          (c-mode         . ,ga/cppninja)
+          (c-ts-mode      . ,ga/cppninja)
+          (c++-mode       . ,ga/cppninja)
+          (c++-ts-mode    . ,ga/cppninja)
+          (cmake-mode     . ,ga/cppninja)
+          (cmake-ts-mode  . ,ga/cppninja)
+          ("CMakeLists\\.txt\\'" . ,ga/cppninja)
+          (rust-mode      . ,ga/rustmake)
+          (rust-ts-mode   . ,ga/rustmake)
+          (toml-mode      . ,ga/rustmake)
+          (ruby-mode      . ,ga/rubymake)
+          (python-mode    . ,ga/pythonmake)
+          (python-ts-mode . ,ga/pythonmake)))
+
+  ;; %G è nil fuori da un repo git (e schlau-compile va in errore):
+  ;; ripiega sulla root projectile o sulla directory del file
+  (advice-add 'schlau-compile-git-root-path :filter-return
+              (lambda (root)
+                (or root
+                    (and (fboundp 'projectile-project-root)
+                         (projectile-project-root))
+                    default-directory)))
 
   (global-set-key [f5] 'schlau-compile-compile)
   (global-set-key [f6] 'schlau-compile-query)
