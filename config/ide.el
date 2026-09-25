@@ -299,7 +299,9 @@
 
 
 (defun my-compilation-close-on-success (buffer status)
-  (when (string-match-p "\\`finished" status)
+  (when (and (string-match-p "\\`finished" status)
+             (with-current-buffer buffer
+               (not (derived-mode-p 'grep-mode))))
     (run-at-time
      5 nil
      (lambda (buffer)
