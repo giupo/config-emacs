@@ -305,7 +305,7 @@ to be browsed, like occur) are left alone so they stay open for
 navigation and editing."
   (when (and (string-match-p "\\`finished" status)
              (with-current-buffer buffer
-               (eq major-mode 'compilation-mode)))
+               (not (derived-mode-p 'grep-mode))))
     (run-at-time
      5 nil
      (lambda (buffer)
