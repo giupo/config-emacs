@@ -31,12 +31,12 @@
 ;;; LSP-mode
 (use-package lsp-mode
   :commands (lsp lsp-deferred)
-  :hook ((c-mode c++-mode python-mode ess-r-mode go-mode csharp-ts-mode csharp-mode) . lsp-deferred)
+  :hook ((c-mode c++-mode ess-r-mode go-mode csharp-ts-mode csharp-mode) . lsp-deferred)
   :custom
   (lsp-keymap-prefix "C-c l")
   (lsp-enable-snippet t)
   (lsp-enable-indentation t)
-  (lsp-prefer-flymake nil)
+  (lsp-diagnostics-provider :flycheck)
   (lsp-idle-delay 0.2))
 
 (use-package lsp-ui
@@ -83,11 +83,6 @@
   :commands R
   :config
   (require 'ess-r-mode))
-
-(use-package lsp-r
-  :ensure nil
-  :after (lsp-mode ess)
-  :hook (ess-r-mode . lsp-deferred))
 
 ;;; Flycheck (linting)
 (use-package flycheck
@@ -177,9 +172,10 @@
 
 (defun my/find-dotnet-solution ()
   "Trova il file .slnx o .sln risalendo l'albero delle directory."
-  (let* ((root (or (locate-dominating-file default-directory ".git")
-                   (locate-dominating-file default-directory "*.slnx")
-                   (locate-dominating-file default-directory "*.sln"))))
+  (let* ((has-sln (lambda (dir)
+                    (directory-files dir nil "\\.slnx?\\'" t 1)))
+         (root (or (locate-dominating-file default-directory has-sln)
+                   (locate-dominating-file default-directory ".git"))))
     (unless root
       (error "Non trovo la root del progetto .NET"))
 
@@ -212,89 +208,50 @@
                  cmd)))
       (set-process-sentinel
        proc
-       (lambda (p event)
+       (lambda (p _event)
          (when (and (eq (process-status p) 'exit)
                     (= (process-exit-status p) 0))
            ;; exit 0 → chiudi tutto
-           (when-let ((win (get-buffer-window buffer)))
+           (when-let* ((win (get-buffer-window buffer)))
              (delete-window win))
            (kill-buffer buffer)))))))
 
 
-(use-package omnisharp
-  :after csharp-mode
-  :init
-  (defun my-csharp-style ()
-    ;; Stile base
-    (c-set-style "k&r")
-
-    ;; Graffe attaccate SEMPRE
-    (c-set-offset 'substatement-open 0)
-    (c-set-offset 'block-open 0)
-    (c-set-offset 'brace-list-open 0)
-    
-    ;; Non andare a capo dopo if/for/while
-    (setq c-hanging-braces-alist
-          '((substatement-open . nil)
-            (block-open . nil)
-            (brace-list-open . nil)))
-    
-    ;; Indentazione standard
-    (setq c-basic-offset 2
-          indent-tabs-mode nil))
-
-  ;; (add-hook 'csharp-mode-hook #'my-csharp-style)
-  ;;(add-hook 'csharp-mode-hook
-  ;;          (lambda ()
-  ;;            (add-hook 'after-save-hook #'my/dotnet-format)))
-)
 
 
 (use-package schlau-compile
   :ensure t
   :init
   
-  (defconst cppninja "if [ ! -d %G/build ]; then mkdir %G/build; fi ; cd %G/build && echo \"Entering directory \'%G/build\'\" && cmake -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_CODE_ANALYSIS=ON .. && ninja -k3 -j8")
-  (defconst cppmake  "if [ ! -d %G/build ]; then mkdir %G/build; fi ; cd %G/build && echo \"Entering directory \'%G/build\'\" && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_CODE_ANALYSIS=ON .. && make")
-  (defconst rustmake "RUST_BACKTRACE=1 ~/.cargo/bin/cargo build && ~/.cargo/bin/cargo test -- --nocapture")
-  (defconst rubymake "rake build")
-  (defconst gomake  "export GOPATH=/development/go ; go install ./... && go test -v && go vet")
-  (defconst hackage "cd %G && stack build --allow-different-user && stack test")
-  (defconst pythonmake "cd %G && uv run pytest -v -x --cov")
-  
+  (defconst ga/cppninja "mkdir -p %G/build && cd %G/build && echo \"Entering directory '%G/build'\" && cmake -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_CODE_ANALYSIS=ON .. && ninja -k3 -j8")
+  (defconst ga/rustmake "RUST_BACKTRACE=1 ~/.cargo/bin/cargo build && ~/.cargo/bin/cargo test -- --nocapture")
+  (defconst ga/rubymake "rake build")
+  (defconst ga/gomake  "export GOPATH=/development/go ; go install ./... && go test -v && go vet")
+  (defconst ga/hackage "cd %G && stack build --allow-different-user && stack test")
+  (defconst ga/pythonmake "cd %G && uv run pytest -v -x --cov")
+
   (setq schlau-compile-alist
-	(append
-	 ;; build Haskell
-	 (eval `'((haskell-mode  . ,hackage)))
-	 (eval `'((yaml-mode     . ,hackage)))
-
-	 ;; compile Go
-	 (eval `'((go-mode . ,gomake)))
-       
-	 ;; compile C++
-	 (eval `'((c++-mode   . ,cppninja)))
-	 (eval `'((cmake-mode . ,cppninja)))
-
-	 ;; compile Rust
-	 (eval `'((rust-mode  . ,rustmake)))
-	 (eval `'((toml-mode  . ,rustmake)))
-
-	 ;; compile rubygem
-	 (eval `'((ruby-mode  . ,rubymake)))
-	 (eval `'((python-mode . ,pythonmake)))
-       ))
+        `((haskell-mode . ,ga/hackage)
+          (yaml-mode    . ,ga/hackage)
+          (go-mode      . ,ga/gomake)
+          (c++-mode     . ,ga/cppninja)
+          (cmake-mode   . ,ga/cppninja)
+          (rust-mode    . ,ga/rustmake)
+          (toml-mode    . ,ga/rustmake)
+          (ruby-mode    . ,ga/rubymake)
+          (python-mode  . ,ga/pythonmake)))
 
   (global-set-key [f5] 'schlau-compile-compile)
   (global-set-key [f6] 'schlau-compile-query)
   (global-set-key [C-f6] 'kill-compilation)
   )
 
-(add-to-list 'compilation-error-regexp-alist 'pytest-nodeid)
-
-(add-to-list 'compilation-error-regexp-alist-alist
-             '(pytest-nodeid
-               "^\\([^:\n]+\\.py\\)::[^[:space:]]+\\s-+FAILED"
-               1 nil))
+(with-eval-after-load 'compile
+  (add-to-list 'compilation-error-regexp-alist 'pytest-nodeid)
+  (add-to-list 'compilation-error-regexp-alist-alist
+               '(pytest-nodeid
+                 "^\\([^:\n]+\\.py\\)::[^[:space:]]+\\s-+FAILED"
+                 1 nil)))
 (setq compilation-scroll-output t)
 
 

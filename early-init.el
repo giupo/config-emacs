@@ -20,6 +20,11 @@
 ;; Imposta il garbage collector più permissivo durante l’avvio
 (setq gc-cons-threshold most-positive-fixnum)
 (setq gc-cons-percentage 0.6)
+;; ...e ripristinalo a valori sensati a fine avvio, altrimenti il GC non gira mai
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (setq gc-cons-threshold (* 16 1024 1024)
+                  gc-cons-percentage 0.1)))
 
 ;; Disattiva la ridistribuzione temporanea dei font all’avvio
 (setq inhibit-compacting-font-caches t)

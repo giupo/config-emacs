@@ -276,7 +276,7 @@
 
      ("j" "Journal"
       entry
-      (file+datetree ,org-journal-file)
+      (file+olp+datetree ,org-journal-file)
       "* %U\n\n%?\n")
      )))
 

@@ -8,7 +8,7 @@
    '(all-the-icons-dired company dap-mode dashboard doom-modeline
 			 doom-themes embark-consult ess go-mode
 			 lsp-pyright lsp-ui magit marginalia
-			 nerd-icons-dired omnisharp orderless
+			 nerd-icons-dired orderless
 			 org-modern org-super-agenda poetry projectile
 			 schlau-compile vertico))
  '(package-vc-selected-packages

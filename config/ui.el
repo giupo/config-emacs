@@ -48,10 +48,8 @@
   ;; centra header
   (setq dashboard-center-content t)
   
-  ;; abbreviazioni dei simboli dei minor mode
-  (setq dashboard-set-navigator t)
-  
-  )
+  ;; usa projectile (non project.el) per la lista progetti
+  (setq dashboard-projects-backend 'projectile))
 
 (use-package doom-modeline
   :ensure t
