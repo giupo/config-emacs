@@ -10,7 +10,7 @@
 			 lsp-pyright lsp-ui magit marginalia
 			 nerd-icons-dired orderless
 			 org-modern org-super-agenda poetry projectile
-			 schlau-compile vertico))
+			 vertico))
  '(package-vc-selected-packages
    '((copilot :url "https://github.com/copilot-emacs/copilot.el" :branch
 	      "main"))))

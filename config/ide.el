@@ -219,50 +219,77 @@
 
 
 
-(use-package schlau-compile
-  :ensure t
-  :init
-  
-  ;; C/C++: CMake + Ninja se c'è un CMakeLists.txt nella root, altrimenti make
-  (defconst ga/cppninja "cd %G && if [ -f CMakeLists.txt ]; then mkdir -p build && cd build && echo \"Entering directory '%G/build'\" && cmake -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_CODE_ANALYSIS=ON .. && ninja -k3 -j8; else make -k; fi")
-  (defconst ga/rustmake "cd %G && RUST_BACKTRACE=1 ~/.cargo/bin/cargo build && ~/.cargo/bin/cargo test -- --nocapture")
-  (defconst ga/rubymake "cd %G && rake build")
-  (defconst ga/gomake  "cd %G && export GOPATH=/development/go ; go install ./... && go test -v && go vet")
-  (defconst ga/hackage "cd %G && stack build --allow-different-user && stack test")
-  (defconst ga/pythonmake "cd %G && uv run pytest -v -x --cov")
+;;; Compilazione intelligente (F5 / F6)
+;;
+;; F5 sceglie il comando in base al build system trovato nella root del
+;; progetto (CMake, make, cargo, go, uv/poetry, dotnet, stack, rake),
+;; lo lancia da lì e se lo ricorda per quel progetto.
+;; F6 (o C-u F5) permette di modificarlo; la modifica viene ricordata.
 
-  (setq schlau-compile-alist
-        `((haskell-mode   . ,ga/hackage)
-          (yaml-mode      . ,ga/hackage)
-          (go-mode        . ,ga/gomake)
-          (go-ts-mode     . ,ga/gomake)
-          (c-mode         . ,ga/cppninja)
-          (c-ts-mode      . ,ga/cppninja)
-          (c++-mode       . ,ga/cppninja)
-          (c++-ts-mode    . ,ga/cppninja)
-          (cmake-mode     . ,ga/cppninja)
-          (cmake-ts-mode  . ,ga/cppninja)
-          ("CMakeLists\\.txt\\'" . ,ga/cppninja)
-          (rust-mode      . ,ga/rustmake)
-          (rust-ts-mode   . ,ga/rustmake)
-          (toml-mode      . ,ga/rustmake)
-          (ruby-mode      . ,ga/rubymake)
-          (python-mode    . ,ga/pythonmake)
-          (python-ts-mode . ,ga/pythonmake)))
+(require 'compile)
 
-  ;; %G è nil fuori da un repo git (e schlau-compile va in errore):
-  ;; ripiega sulla root projectile o sulla directory del file
-  (advice-add 'schlau-compile-git-root-path :filter-return
-              (lambda (root)
-                (or root
+(defconst ga/compile-rules
+  '(("\\`CMakeLists\\.txt\\'" . "[ -f build/build.ninja ] || cmake -S . -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_CODE_ANALYSIS=ON && ninja -C build -k3 -j8")
+    ("\\`\\(GNU\\)?[Mm]akefile\\'" . "make -k")
+    ("\\`Cargo\\.toml\\'"         . "RUST_BACKTRACE=1 ~/.cargo/bin/cargo build && ~/.cargo/bin/cargo test -- --nocapture")
+    ("\\`go\\.mod\\'"             . "export GOPATH=/development/go ; go install ./... && go test -v ./... && go vet ./...")
+    ("\\`poetry\\.lock\\'"        . "poetry run pytest -v -x")
+    ("\\`\\(uv\\.lock\\|pyproject\\.toml\\)\\'" . "uv run pytest -v -x --cov")
+    ("\\.\\(slnx?\\|csproj\\)\\'" . "dotnet build")
+    ("\\`stack\\.yaml\\'"         . "stack build --allow-different-user && stack test")
+    ("\\`Rakefile\\'"             . "rake build"))
+  "Regole (REGEXP-FILE . COMANDO): la prima che trova un file nella root vince.")
+
+(defvar ga/compile-commands (make-hash-table :test #'equal)
+  "Comando di compilazione ricordato per ciascun progetto (root → comando).")
+
+(defun ga/compile--detect (dir)
+  "Comando di build adatto a DIR in base ai file che contiene, o nil."
+  (seq-some (lambda (rule)
+              (and (directory-files dir nil (car rule) t 1)
+                   (cdr rule)))
+            ga/compile-rules))
+
+(defun ga/compile--guess ()
+  "Ritorna (DIR . COMANDO) per il buffer corrente; COMANDO può essere nil.
+Prova prima la root del progetto (git, poi projectile), poi la directory
+più vicina che contiene un file di build (utile nei monorepo)."
+  (let* ((root (expand-file-name
+                (or (locate-dominating-file default-directory ".git")
                     (and (fboundp 'projectile-project-root)
                          (projectile-project-root))
                     default-directory)))
+         (cmd (ga/compile--detect root))
+         (near (and (not cmd)
+                    (locate-dominating-file default-directory
+                                            #'ga/compile--detect))))
+    (if near
+        (cons (expand-file-name near) (ga/compile--detect near))
+      (cons root cmd))))
 
-  (global-set-key [f5] 'schlau-compile-compile)
-  (global-set-key [f6] 'schlau-compile-query)
-  (global-set-key [C-f6] 'kill-compilation)
-  )
+(defun ga/compile (&optional edit)
+  "Compila il progetto corrente con il comando adatto al suo build system.
+Con EDIT (prefisso C-u), o se non riconosce il progetto, chiede il comando."
+  (interactive "P")
+  (pcase-let* ((`(,dir . ,guess) (ga/compile--guess))
+               (cmd (or (gethash dir ga/compile-commands) guess)))
+    (when (or edit (not cmd))
+      (setq cmd (compilation-read-command (or cmd compile-command))))
+    (puthash dir cmd ga/compile-commands)
+    (let ((default-directory dir))
+      (compile cmd))))
+
+(defun ga/compile-edit ()
+  "Modifica e lancia il comando di compilazione del progetto corrente."
+  (interactive)
+  (ga/compile t))
+
+;; Salva i buffer modificati senza chiedere prima di compilare
+(setq compilation-ask-about-save nil)
+
+(global-set-key [f5] #'ga/compile)
+(global-set-key [f6] #'ga/compile-edit)
+(global-set-key [C-f6] #'kill-compilation)
 
 (with-eval-after-load 'compile
   (add-to-list 'compilation-error-regexp-alist 'pytest-nodeid)
