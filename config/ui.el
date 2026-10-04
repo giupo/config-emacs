@@ -57,8 +57,8 @@
   ;; Mostra subito la modeline anche se Emacs parte in demone
   (doom-modeline-mode 1)
   :custom
-  ;; Numero di caratteri del nome del buffer (0 = intero)
-  (doom-modeline-buffer-file-name-style 'truncate-except-project)
+  ;; Path relativo al progetto, senza abbreviare le directory
+  (doom-modeline-buffer-file-name-style 'relative-from-project)
   ;; Mostra l’icona (richiede all-the-icons)
   (doom-modeline-icon t)
   ;; Mostra la percentuale nel buffer
