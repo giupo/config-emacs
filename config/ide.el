@@ -285,7 +285,7 @@
 (require 'compile)
 
 (defconst ga/compile-rules
-  '(("\\`CMakeLists\\.txt\\'" . "[ -f build/build.ninja ] || cmake -S . -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DENABLE_CODE_ANALYSIS=ON && ninja -C build -k3 -j8")
+  '(("\\`CMakeLists\\.txt\\'" . "cmake --build --preset debug")
     ("\\`\\(GNU\\)?[Mm]akefile\\'" . "make -k")
     ("\\`Cargo\\.toml\\'"         . "RUST_BACKTRACE=1 ~/.cargo/bin/cargo build && ~/.cargo/bin/cargo test -- --nocapture")
     ("\\`go\\.mod\\'"             . "export GOPATH=/development/go ; go install ./... && go test -v ./... && go vet ./...")
