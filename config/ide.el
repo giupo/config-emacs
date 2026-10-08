@@ -20,7 +20,13 @@
         (cmake "https://github.com/uyha/tree-sitter-cmake")
         (json "https://github.com/tree-sitter/tree-sitter-json")
         (python "https://github.com/tree-sitter/tree-sitter-python")
-        (elisp "https://github.com/Wilfred/tree-sitter-elisp")))
+        (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+        ;; Versioni fissate: le grammatiche più recenti usano un ABI
+        ;; che i *-ts-mode di Emacs 30 non supportano ancora.
+        (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "v0.23.1" "src")
+        (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "v0.23.2" "typescript/src")
+        (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "v0.23.2" "tsx/src")
+        (css "https://github.com/tree-sitter/tree-sitter-css" "v0.23.2" "src")))
 
 
 (use-package treesit
@@ -61,6 +67,56 @@
   
   (add-hook 'go-mode-hook #'my-go-mode-setup)
   )
+
+;;; TypeScript / JavaScript / React
+;;
+;; Usa i major mode tree-sitter integrati in Emacs 30:
+;;   .ts → typescript-ts-mode, .tsx → tsx-ts-mode, .js/.jsx → js-ts-mode (JSX incluso)
+;; LSP: typescript-language-server (npm i -g typescript typescript-language-server)
+;; ESLint: lsp-mode lo affianca in automatico se installato (M-x lsp-install-server RET eslint)
+
+(defun ga/treesit-ensure (&rest langs)
+  "Installa le grammatiche tree-sitter in LANGS che mancano."
+  (dolist (lang langs)
+    (unless (treesit-language-available-p lang)
+      (treesit-install-language-grammar lang))))
+
+(use-package typescript-ts-mode
+  :ensure nil
+  :mode (("\\.ts\\'"  . typescript-ts-mode)
+         ("\\.[cm]ts\\'" . typescript-ts-mode)
+         ("\\.tsx\\'" . tsx-ts-mode))
+  :init
+  (ga/treesit-ensure 'javascript 'typescript 'tsx 'css)
+  (add-to-list 'auto-mode-alist '("\\.[cm]?jsx?\\'" . js-ts-mode))
+  (add-to-list 'major-mode-remap-alist '(css-mode . css-ts-mode))
+  :hook ((typescript-ts-mode tsx-ts-mode js-ts-mode) . lsp-deferred)
+  :custom
+  (typescript-ts-mode-indent-offset 2)
+  (js-indent-level 2))
+
+;; Usa il tsserver di node_modules/typescript del progetto invece di
+;; cercare un `tsserver' globale nel PATH (che di solito non c'è)
+(use-package lsp-javascript
+  :ensure nil
+  :after lsp-mode
+  :custom
+  (lsp-clients-typescript-prefer-use-project-ts-server t))
+
+;; L'editorconfig di Emacs 30 non conosce l'offset dei mode TypeScript
+(with-eval-after-load 'editorconfig
+  (dolist (mode '(typescript-ts-mode tsx-ts-mode))
+    (add-to-list 'editorconfig-indentation-alist
+                 `(,mode typescript-ts-mode-indent-offset))))
+
+;; Formattazione con Prettier (usa quello in node_modules del progetto se c'è)
+(use-package apheleia
+  :hook ((typescript-ts-mode tsx-ts-mode js-ts-mode css-ts-mode json-ts-mode)
+         . apheleia-mode)
+  :custom
+  ;; Non passare a Prettier --use-tabs/--tab-width presi da Emacs:
+  ;; così legge .editorconfig (o .prettierrc) del progetto
+  (apheleia-formatters-respect-indent-level nil))
 
 ;;; Python + Poetry
 (use-package pyvenv
@@ -237,7 +293,10 @@
     ("\\`\\(uv\\.lock\\|pyproject\\.toml\\)\\'" . "uv run pytest -v -x --cov")
     ("\\.\\(slnx?\\|csproj\\)\\'" . "dotnet build")
     ("\\`stack\\.yaml\\'"         . "stack build --allow-different-user && stack test")
-    ("\\`Rakefile\\'"             . "rake build"))
+    ("\\`Rakefile\\'"             . "rake build")
+    ("\\`pnpm-lock\\.yaml\\'"     . "pnpm run build")
+    ("\\`yarn\\.lock\\'"          . "yarn build")
+    ("\\`package\\.json\\'"       . "npm run build"))
   "Regole (REGEXP-FILE . COMANDO): la prima che trova un file nella root vince.")
 
 (defvar ga/compile-commands (make-hash-table :test #'equal)
