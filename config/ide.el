@@ -107,6 +107,8 @@
 ;; Usa il major mode tree-sitter integrato in Emacs:
 ;;   CMakeLists.txt, *.cmake → cmake-ts-mode
 ;; LSP: cmake-language-server (uv tool install cmake-language-server)
+;; Formattazione al salvataggio: cmake-format (uv tool install cmakelang),
+;; configurabile per progetto con .cmake-format.py/.yaml (via apheleia, più sotto).
 ;; Per clangd nei progetti C/C++ serve compile_commands.json:
 ;;   set(CMAKE_EXPORT_COMPILE_COMMANDS ON) nel CMakeLists.txt (o nel preset)
 
@@ -119,7 +121,8 @@
   (add-to-list 'major-mode-remap-alist '(cmake-mode . cmake-ts-mode))
   :hook (cmake-ts-mode . lsp-deferred)
   :custom
-  (cmake-ts-indent-offset 4))
+  ;; Come il default di cmake-format, così Emacs e il formatter concordano
+  (cmake-ts-indent-offset 2))
 
 ;;; TypeScript / JavaScript / React
 ;;
@@ -159,7 +162,7 @@
 ;; Formattazione con Prettier (usa quello in node_modules del progetto se c'è)
 (use-package apheleia
   :hook ((typescript-ts-mode tsx-ts-mode js-ts-mode css-ts-mode json-ts-mode
-          go-ts-mode)
+          go-ts-mode cmake-ts-mode)
          . apheleia-mode)
   :config
   ;; In Go usa goimports (gofmt + gestione automatica degli import)
