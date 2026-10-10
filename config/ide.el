@@ -17,7 +17,9 @@
       '((c "https://github.com/tree-sitter/tree-sitter-c")
         (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
         (bash "https://github.com/tree-sitter/tree-sitter-bash")
-        (cmake "https://github.com/uyha/tree-sitter-cmake")
+        ;; Stesso commit con cui è testato cmake-ts-mode di Emacs 31
+        (cmake "https://github.com/uyha/tree-sitter-cmake"
+               :commit "e409ae33f00e04cde30f2bcffb979caf1a33562a")
         (json "https://github.com/tree-sitter/tree-sitter-json")
         (python "https://github.com/tree-sitter/tree-sitter-python")
         (elisp "https://github.com/Wilfred/tree-sitter-elisp")
@@ -26,18 +28,26 @@
         (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "v0.23.1" "src")
         (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "v0.23.2" "typescript/src")
         (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "v0.23.2" "tsx/src")
-        (css "https://github.com/tree-sitter/tree-sitter-css" "v0.23.2" "src")))
+        (css "https://github.com/tree-sitter/tree-sitter-css" "v0.23.2" "src")
+        (go "https://github.com/tree-sitter/tree-sitter-go" "v0.23.4" "src")
+        (gomod "https://github.com/camdencheek/tree-sitter-go-mod" "v1.1.0" "src")))
 
 
 (use-package treesit
   :ensure nil  ;; integrato in Emacs 29+
 )
 
+(defun ga/treesit-ensure (&rest langs)
+  "Installa le grammatiche tree-sitter in LANGS che mancano."
+  (dolist (lang langs)
+    (unless (treesit-language-available-p lang)
+      (treesit-install-language-grammar lang))))
+
 
 ;;; LSP-mode
 (use-package lsp-mode
   :commands (lsp lsp-deferred)
-  :hook ((c-mode c++-mode ess-r-mode go-mode csharp-ts-mode csharp-mode) . lsp-deferred)
+  :hook ((c-mode c++-mode ess-r-mode csharp-ts-mode csharp-mode) . lsp-deferred)
   :custom
   (lsp-keymap-prefix "C-c l")
   (lsp-enable-snippet t)
@@ -54,19 +64,62 @@
   (lsp-ui-sideline-enable t))
 
 
-;;; Go mode
+;;; Go
+;;
+;; Usa i major mode tree-sitter integrati in Emacs:
+;;   .go → go-ts-mode, go.mod → go-mod-ts-mode
+;; Strumenti (finiscono in GOBIN, già nel PATH via mise):
+;;   go install golang.org/x/tools/gopls@latest
+;;   go install golang.org/x/tools/cmd/goimports@latest
+;;   go install github.com/go-delve/delve/cmd/dlv@latest
+;; Formattazione al salvataggio con goimports (via apheleia, più sotto).
 
-(use-package go-mode
-  :mode "\\.go\\'"
-  :config
-  (setq gofmt-command "goimports")
-  (add-hook 'before-save-hook 'gofmt-before-save)
-  (defun my-go-mode-setup ()
-    (setq tab-width 2)
-    (setq indent-tabs-mode t)) ;; usa TAB, non spazi
-  
-  (add-hook 'go-mode-hook #'my-go-mode-setup)
-  )
+(defun ga/go-setup ()
+  "Indenta con TAB larghi quanto `go-ts-mode-indent-offset'."
+  (setq tab-width go-ts-mode-indent-offset)
+  (setq indent-tabs-mode t))
+
+(use-package go-ts-mode
+  :ensure nil
+  :mode (("\\.go\\'" . go-ts-mode)
+         ("/go\\.mod\\'" . go-mod-ts-mode))
+  :init
+  (ga/treesit-ensure 'go 'gomod)
+  ;; Se qualcosa chiede go-mode (es. il pacchetto go-mode), usa la versione ts
+  (add-to-list 'major-mode-remap-alist '(go-mode . go-ts-mode))
+  :hook (((go-ts-mode go-mod-ts-mode) . lsp-deferred)
+         (go-ts-mode . ga/go-setup))
+  :custom
+  (go-ts-mode-indent-offset 2))
+
+(use-package lsp-go
+  :ensure nil
+  :after lsp-mode
+  :custom
+  (lsp-go-use-placeholders t)
+  (lsp-go-analyses '((unusedparams . t)
+                     (unusedwrite . t)
+                     (nilness . t)
+                     (shadow . t))))
+
+;;; CMake
+;;
+;; Usa il major mode tree-sitter integrato in Emacs:
+;;   CMakeLists.txt, *.cmake → cmake-ts-mode
+;; LSP: cmake-language-server (uv tool install cmake-language-server)
+;; Per clangd nei progetti C/C++ serve compile_commands.json:
+;;   set(CMAKE_EXPORT_COMPILE_COMMANDS ON) nel CMakeLists.txt (o nel preset)
+
+(use-package cmake-ts-mode
+  :ensure nil
+  :mode ("\\(?:CMakeLists\\.txt\\|\\.cmake\\)\\'" . cmake-ts-mode)
+  :init
+  (ga/treesit-ensure 'cmake)
+  ;; Se qualcosa chiede cmake-mode (es. il pacchetto cmake-mode), usa la versione ts
+  (add-to-list 'major-mode-remap-alist '(cmake-mode . cmake-ts-mode))
+  :hook (cmake-ts-mode . lsp-deferred)
+  :custom
+  (cmake-ts-indent-offset 4))
 
 ;;; TypeScript / JavaScript / React
 ;;
@@ -74,12 +127,6 @@
 ;;   .ts → typescript-ts-mode, .tsx → tsx-ts-mode, .js/.jsx → js-ts-mode (JSX incluso)
 ;; LSP: typescript-language-server (npm i -g typescript typescript-language-server)
 ;; ESLint: lsp-mode lo affianca in automatico se installato (M-x lsp-install-server RET eslint)
-
-(defun ga/treesit-ensure (&rest langs)
-  "Installa le grammatiche tree-sitter in LANGS che mancano."
-  (dolist (lang langs)
-    (unless (treesit-language-available-p lang)
-      (treesit-install-language-grammar lang))))
 
 (use-package typescript-ts-mode
   :ensure nil
@@ -111,8 +158,12 @@
 
 ;; Formattazione con Prettier (usa quello in node_modules del progetto se c'è)
 (use-package apheleia
-  :hook ((typescript-ts-mode tsx-ts-mode js-ts-mode css-ts-mode json-ts-mode)
+  :hook ((typescript-ts-mode tsx-ts-mode js-ts-mode css-ts-mode json-ts-mode
+          go-ts-mode)
          . apheleia-mode)
+  :config
+  ;; In Go usa goimports (gofmt + gestione automatica degli import)
+  (setf (alist-get 'go-ts-mode apheleia-mode-alist) 'goimports)
   :custom
   ;; Non passare a Prettier --use-tabs/--tab-width presi da Emacs:
   ;; così legge .editorconfig (o .prettierrc) del progetto
@@ -161,7 +212,6 @@
   :diminish company-mode
   :hook
   (after-init . global-company-mode)
-  (go-mode . company-mode)
   :custom
   (company-idle-delay 0.1)       ;; tempo prima che appaia il popup
   (company-minimum-prefix-length 1) ;; inizia a completare dopo 1 carattere
@@ -175,7 +225,7 @@
   :init
   (projectile-mode +1)
   :custom
-  (projectile-switch-project-action 'projectile-commander)
+  (projectile-switch-project-action 'projectile-dispatch)
   (projectile-cache-file "~/.config/emacs/.cache/projectile.cache")
   (projectile-known-projects-file "~/.config/emacs/.cache/projectile-bookmarks.eld")
   (projectile-enable-caching t)
@@ -193,6 +243,7 @@
   (dap-auto-configure-mode)
   (require 'dap-python)
   (require 'dap-gdb-lldb)
+  (require 'dap-dlv-go)
   (setq dap-python-debugger 'debugpy)
   (dap-register-debug-template
    "C++ GDB"
@@ -288,7 +339,7 @@
   '(("\\`CMakeLists\\.txt\\'" . "cmake --build --preset debug")
     ("\\`\\(GNU\\)?[Mm]akefile\\'" . "make -k")
     ("\\`Cargo\\.toml\\'"         . "RUST_BACKTRACE=1 ~/.cargo/bin/cargo build && ~/.cargo/bin/cargo test -- --nocapture")
-    ("\\`go\\.mod\\'"             . "export GOPATH=/development/go ; go install ./... && go test -v ./... && go vet ./...")
+    ("\\`go\\.mod\\'"             . "go build ./... && go test -v ./... && go vet ./...")
     ("\\`poetry\\.lock\\'"        . "poetry run pytest -v -x")
     ("\\`\\(uv\\.lock\\|pyproject\\.toml\\)\\'" . "uv run pytest -v -x --cov")
     ("\\.\\(slnx?\\|csproj\\)\\'" . "dotnet build")
