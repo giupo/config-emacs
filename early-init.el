@@ -9,7 +9,10 @@
 ;; Disattiva UI elements *prima* che vengano creati i frame
 (menu-bar-mode -1)
 (push '(tool-bar-lines . 0) default-frame-alist)
-(tool-bar-mode -1)
+
+(when (fboundp 'tool-bar-mode)
+  (tool-bar-mode -1))
+
 ;;(scroll-bar-mode -1)
 ;;(tooltip-mode -1)
 
