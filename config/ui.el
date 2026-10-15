@@ -18,7 +18,8 @@
 
 (use-package doom-themes
   :config
-  (load-theme 'doom-one t)
+  ;;  (load-theme 'doom-one t)
+  (load-theme 'doom-dark+ t)
   )
 
 ;; installa e configura dashboard
