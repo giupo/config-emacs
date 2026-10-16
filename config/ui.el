@@ -22,6 +22,7 @@
   (load-theme 'doom-dark+ t)
   )
 
+
 ;; installa e configura dashboard
 (use-package dashboard
   :ensure t
@@ -30,7 +31,7 @@
   :config
   ;; percorso immagine header (opzionale)
   (setq dashboard-startup-banner 'official) ;; logo Emacs ufficiale
-  ;; oppure un file locale: (setq dashboard-startup-banner "~/.emacs.d/logo.png")
+  ;;oppure un file locale: (setq dashboard-startup-banner "~/./logo.png")
 
   ;; mostra 5 file recenti + 5 voci dell'agenda org
   (setq dashboard-items '((recents  . 5)

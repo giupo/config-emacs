@@ -19,7 +19,8 @@
         (bash "https://github.com/tree-sitter/tree-sitter-bash")
         ;; Stesso commit con cui è testato cmake-ts-mode di Emacs 31
         (cmake "https://github.com/uyha/tree-sitter-cmake"
-               :commit "e409ae33f00e04cde30f2bcffb979caf1a33562a")
+               ;;       :commit "e409ae33f00e04cde30f2bcffb979caf1a33562a")
+	       )
         (json "https://github.com/tree-sitter/tree-sitter-json")
         (python "https://github.com/tree-sitter/tree-sitter-python")
         (elisp "https://github.com/Wilfred/tree-sitter-elisp")
