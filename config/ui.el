@@ -30,7 +30,8 @@
   :hook (after-init . dashboard-setup-startup-hook)
   :config
   ;; percorso immagine header (opzionale)
-  (setq dashboard-startup-banner 'official) ;; logo Emacs ufficiale
+  ;;(setq dashboard-startup-banner 'official) ;; logo Emacs ufficiale
+  (setq dashboard-startup-banner 'logo)
   ;;oppure un file locale: (setq dashboard-startup-banner "~/./logo.png")
 
   ;; mostra 5 file recenti + 5 voci dell'agenda org
