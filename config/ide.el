@@ -435,6 +435,10 @@ navigation and editing."
 (add-hook 'compilation-finish-functions #'my-compilation-close-on-success)
 
 
+(use-package yaml-mode
+  :ensure t
+  :mode ("\\.ya?ml\\'" . yaml-mode))
+
 (provide 'ide)
 
 ;;; ide.el ends here
